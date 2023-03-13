@@ -1,0 +1,119 @@
+#!/bin/bash
+#xpodra03 Jiri Podrazil
+
+POSIXLY_CORRECT=yes
+
+export POSIXLY_CORRECT=yes
+export LC_NUMERIC=en_US.UTF-8
+
+
+print_help()
+{
+    echo -e "Usage: \tmole -h"
+    echo -e "\tmole [-g GROUP] FILE"
+    echo -e "\t\tFILE will be open by yourEditor. Defaul is vim"
+    echo -e "\tmole [-m] [FILTERS] [DIRECTORY]"
+    echo -e "\t\t"
+    echo -e "\tmole list [FILTERS] [DIRECTORY]:"
+
+    echo -e ""
+    echo -e "\texport MOLE_RC=yourFILE"
+    echo -e "\t\tYou need to set file, where the record will be saved"
+
+    echo -e ""
+    echo -e "\texport EDITOR=yourEditor"
+    echo -e "\t\tYou can change the editor. Defaul is vim"
+
+
+    echo -e ""
+    echo -e "\texport MOLE_RC=yourFILE"
+    echo -e "\t\tYou need to set file, where the record will be saved"
+
+
+
+    echo $LOG_FILES
+}
+
+
+FILTER=""
+LOG_FILES=$MOLE_RC  #
+EDIT=$EDITOR        #default EDITOR is vim. User can change it by this variable
+DATE_A=""           #records after this date. others are ignored
+DATE_B=""           #records before this date. others are ignored
+FILE=""             #file that user want open
+DIRECTORY=""        #directory where user want open file
+GROUP=""            #variable for file GROUP 
+COMMAND=""          #varialble for command (list, secret-log)
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    -h)
+        print_help
+        exit 0
+        ;;
+    -a)
+        DATE_A="$2"
+        shift
+        shift
+        ;;
+    -b)
+        DATE_B="$2"
+        shift
+        shift
+        ;;
+    -g)
+        GROUP="$2"
+        shift
+        shift
+        ;;
+    -m)     #DOTO
+        GROUP="$2"
+        shift
+        shift
+        ;;
+    *)                              
+        if [ -z "$COMMAND" ];then         
+            COMMAND="$1"
+            shift
+        else                      
+            exit 1
+        fi
+        ;;
+    esac
+done
+
+
+
+
+if [ "$COMMAND" == "list" ]; then       #
+    
+    #print file with records
+    #DOTO
+    cat $MOLE_RC
+    echo "jeste neni hotovo"
+    
+fi
+
+if [ "$COMMAND" == "secret-log" ]; then         #
+    #secret-log DOTO
+    echo "jeste neni hotovo"
+fi
+
+
+# commant is not "list" or "sec-log", so it has to by file, or file dicertory
+if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" != "" ]; then
+    
+    echo -e ".$COMMAND:\t$GROUP" >> $MOLE_RC  #make record about opening file
+
+    if [ "$EDIT" != "vim" ] && [ "$EDIT" != "" ]; then
+        #not dafault editor
+        echo $EDIT
+        $EDIT $COMMAND
+              
+
+    else
+        vi $COMMAND     ##dafaul editor is vim   
+    fi
+fi
+
+exit
