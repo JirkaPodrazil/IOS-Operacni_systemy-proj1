@@ -25,10 +25,17 @@ print_help()
     echo -e "\t\tYou can change the editor. Defaul is vim"
 
 
-    echo -e ""
+    echo -e "\t"
     echo -e "\texport MOLE_RC=yourFILE"
     echo -e "\t\tYou need to set file, where the record will be saved"
-
+    
+    if [ "$LOG_FILES" == "" ]; then       #
+        LOG_FILES="Have not been set yet"    
+    fi
+    echo -e "\t\tCurrent record file is:\t$LOG_FILES"
+    if [ "$LOG_FILES" == "Have not been set yet" ]; then       #
+        LOG_FILES=""    
+    fi
 
 
     echo $LOG_FILES
@@ -36,10 +43,11 @@ print_help()
 
 
 FILTER=""
+DATE=$(date +%F)
 LOG_FILES=$MOLE_RC  #
 EDIT=$EDITOR        #default EDITOR is vim. User can change it by this variable
-DATE_A=""           #records after this date. others are ignored
-DATE_B=""           #records before this date. others are ignored
+DATE_A="0000-00-00"           #records after this date. others are ignored
+DATE_B="9999-99-99"           #records before this date. others are ignored
 FILE=""             #file that user want open
 DIRECTORY=""        #directory where user want open file
 GROUP=""            #variable for file GROUP 
@@ -89,8 +97,11 @@ if [ "$COMMAND" == "list" ]; then       #
     
     #print file with records
     #DOTO
-    cat $MOLE_RC
-    echo "jeste neni hotovo"
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC
+    #awk -F, -v DATE_A=$DATE_A -v DATE_B=$DATE_B -v GROUP=$GROUP -v FILE=$LOG_FILES'NR > 0 && (($2 == GROUP || GENDER == "")){ print("FILE: \tGROUP") }
+    #        END{}' "$MOLE_RC"
+    #cat $MOLE_RC
+    #echo "jeste neni hotovo"
     
 fi
 
@@ -103,7 +114,7 @@ fi
 # commant is not "list" or "sec-log", so it has to by file, or file dicertory
 if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" != "" ]; then
     
-    echo -e ".$COMMAND:\t$GROUP" >> $MOLE_RC  #make record about opening file
+    echo -e ".$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  #make record about opening file
 
     if [ "$EDIT" != "vim" ] && [ "$EDIT" != "" ]; then
         #not dafault editor
