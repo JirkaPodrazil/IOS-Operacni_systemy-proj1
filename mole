@@ -94,14 +94,9 @@ done
 
 
 if [ "$COMMAND" == "list" ]; then       #
-    
-    #print file with records
     #DOTO
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC
-    #awk -F, -v DATE_A=$DATE_A -v DATE_B=$DATE_B -v GROUP=$GROUP -v FILE=$LOG_FILES'NR > 0 && (($2 == GROUP || GENDER == "")){ print("FILE: \tGROUP") }
-    #        END{}' "$MOLE_RC"
-    #cat $MOLE_RC
-    #echo "jeste neni hotovo"
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC | column -s ',' -t
+   
     
 fi
 
