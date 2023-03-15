@@ -7,13 +7,14 @@ export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
-#           zmenit separator z "," na ";"
-#           zaznamy se nebudou opakovat, ale bude se pripisovat groupa a datum
-#           zmenit Filtry na substringi
-#           format DATE zmenit na DATE_TIME     ##zmenono a filtru ASI funguje
-#               => fitlr na substring          
-#           secret_log vubec neni hotovy
-#           formatovani sloupcu ve funkci list
+#           
+#                       zmenit separator z "," na ";"
+# !!!!!!PRIORITA!!!!!!  zaznamy se nebudou opakovat, ale bude se pripisovat groupa a datum 
+#                       zmenit Filtry na substringi
+#                       format DATE zmenit na DATE_TIME     ##zmenono a filtru ASI funguje
+#                           => fitlr na substring          
+#                       secret_log vubec neni hotovy
+#                       formatovani sloupcu ve funkci list
 
 print_help()
 {
@@ -139,6 +140,7 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     ##make record about opening file
     DIRECTORY=($(pwd))
     DATE=($(date +%F_%H-%M-%S))
+    awk -F, -v COMMAND=COMMAND ''
     echo -e "$DIRECTORY,.$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  
 
 
