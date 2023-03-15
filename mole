@@ -6,6 +6,14 @@ POSIXLY_CORRECT=yes
 export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
+#######TODO
+#           zmenit separator z "," na ";"
+#           zaznamy se nebudou opakovat, ale bude se pripisovat groupa a datum
+#           zmenit Filtry na substringi
+#           format DATE zmenit na DATE_TIME     ##zmenono a filtru ASI funguje
+#               => fitlr na substring          
+#           secret_log vubec neni hotovy
+#           formatovani sloupcu ve funkci list
 
 print_help()
 {
@@ -29,11 +37,11 @@ print_help()
     echo -e "\texport MOLE_RC=yourFILE"
     echo -e "\t\tYou need to set file, where the record will be saved"
     
-    if [ "$LOG_FILES" == "" ]; then       #
+    if [ "$LOG_FILES" == "" ]; then       
         LOG_FILES="Have not been set yet"    
     fi
     echo -e "\t\tCurrent record file is:\t$LOG_FILES"
-    if [ "$LOG_FILES" == "Have not been set yet" ]; then       #
+    if [ "$LOG_FILES" == "Have not been set yet" ]; then       
         LOG_FILES=""    
     fi
 
@@ -42,16 +50,16 @@ print_help()
 }
 
 
-FILTER=""
-DATE=$(date +%F)
-LOG_FILES=$MOLE_RC  #
-EDIT=$EDITOR        #default EDITOR is vim. User can change it by this variable
-DATE_A="0000-00-00"           #records after this date. others are ignored
-DATE_B="9999-99-99"           #records before this date. others are ignored
-FILE=""             #file that user want open
-DIRECTORY=""        #directory where user want open file
-GROUP=""            #variable for file GROUP 
-COMMAND=""          #varialble for command (list, secret-log)
+FILTER=""               
+DATE=""                    #format YYYY-MM-DD
+LOG_FILES=$MOLE_RC          #
+EDIT=$EDITOR                #default EDITOR is vim. User can change it by this variable
+DATE_A="0000-00-00"         #records after this date. others are ignored
+DATE_B="9999-99-99"         #records before this date. others are ignored
+FILE=""                     #file that user want open
+DIRECTORY=""                #directory where user want open file
+GROUP=""                    #variable for file GROUP 
+COMMAND=""                  #varialble for command (list, secret-log)
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -94,14 +102,18 @@ done
 
 ##list
 ##display list of records with filters
-if [ "$COMMAND" == "list" ]; then       #
-    
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC | column -s ',' -t  
+if [ "$COMMAND" == "list" ]; then       
+    ##argumets in order:
+    #   DIRECTORY
+    #   FILE
+    #   GROUP
+    #   DATE
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $3|| GROUP == "")&&($4>DATE_A)&&($4<DATE_B)) {print $2"\t"$3}' $MOLE_RC | column -s ',' -t  
     
 fi
 
 ##secret_log   DOTODOTODOTODOTODOTODOTO!!!!!!!!!!!!!!!!!!
-if [ "$COMMAND" == "secret-log" ]; then         #
+if [ "$COMMAND" == "secret-log" ]; then         
     #secret-log DOTO
     echo "jeste neni hotovo"
 fi
@@ -125,7 +137,9 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     fi
 
     ##make record about opening file
-    echo -e ".$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  
+    DIRECTORY=($(pwd))
+    DATE=($(date +%F_%H-%M-%S))
+    echo -e "$DIRECTORY,.$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  
 
 
     ##check which EDITOR user want to use
