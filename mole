@@ -92,30 +92,47 @@ done
 
 
 
-
+##list
+##display list of records with filters
 if [ "$COMMAND" == "list" ]; then       #
-    #DOTO
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC | column -s ',' -t
-   
+    
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $2|| GROUP == "")&&($3>DATE_A)&&($3<DATE_B)) {print $1"\t"$2}' $MOLE_RC | column -s ',' -t  
     
 fi
 
+##secret_log   DOTODOTODOTODOTODOTODOTO!!!!!!!!!!!!!!!!!!
 if [ "$COMMAND" == "secret-log" ]; then         #
     #secret-log DOTO
     echo "jeste neni hotovo"
 fi
 
 
-# commant is not "list" or "sec-log", so it has to by file, or file dicertory
+##file/directory is not set
+##pick random file in current directory, and save if into var COMMAND
+if [ "$COMMAND" == "" ]; then         
+    COMMAND=($(ls | shuf))
+fi
+
+
+##Open FILE/DERECTORY
+##passed argument is not "list" or "sec-log" and it is not empty, so it has to by file, or file dicertory
 if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" != "" ]; then
     
-    echo -e ".$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  #make record about opening file
+    ##Passed argument is DIRECTORY
+    ##Pick random FILE, and save to COMMAND (it will be opened later)
+    if [ -d $COMMAND ]; then
+        COMMAND=($(ls $COMMAND| shuf))
+    fi
 
-    if [ "$EDIT" != "vim" ] && [ "$EDIT" != "" ]; then
+    ##make record about opening file
+    echo -e ".$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  
+
+
+    ##check which EDITOR user want to use
+    if [ "$EDIT" != "vi" ] && [ "$EDIT" != "" ]; then
         #not dafault editor
-        echo $EDIT
-        $EDIT $COMMAND
-              
+        ##open FILE with passed EDITOR
+        $EDIT $COMMAND            
 
     else
         vi $COMMAND     ##dafaul editor is vim   
