@@ -7,12 +7,11 @@ export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
-#           
-#                       zmenit Filtry na substringi
-        
-#                       secret_log vubec neni hotovy
-#                       formatovani sloupcu ve funkci list
-
+#   !!!PRIORITA!!!             
+#   !!!PRIORITA!!!  zmenit Filtry na substringi
+#                   secret_log vubec neni hotovy
+#                   formatovani sloupcu ve funkci list
+#                   
 print_help()
 {
     echo -e "Usage: \tmole -h"
@@ -56,10 +55,12 @@ DATE_A="0000-00-00"         #records after this date. others are ignored
 DATE_B="9999-99-99"         #records before this date. others are ignored
 FILE=""                     #file that user want open
 DIRECTORY=""                #directory where user want open file
-GROUP=""                    #variable for file GROUP 
+GROUP="-"                    #variable for file GROUP 
 COMMAND=""
 RECORD=""                  #varialble for command (list, secret-log)
 
+
+## store passing argument
 while [ "$#" -gt 0 ]; do
     case "$1" in
     -h)
@@ -82,7 +83,7 @@ while [ "$#" -gt 0 ]; do
         shift
         ;;
     -m)     #DOTO
-        GROUP="$2"
+        
         shift
         shift
         ;;
@@ -107,7 +108,12 @@ if [ "$COMMAND" == "list" ]; then
     #   FILE            $2
     #   GROUP           $3
     #   DATE            $4
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $3|| GROUP == "")&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" $3}' $MOLE_RC | column -s ',' -t  
+    
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B ' ((index($3, GROUP) != 0)&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" GROUP}' $MOLE_RC | column -s ',' -t  
+    
+    
+    
+
     
 fi
 
@@ -135,36 +141,29 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
         COMMAND=($(ls $COMMAND| shuf))
     fi
 
-    ##make record about opening file
+    
     DIRECTORY=($(pwd))
     DATE=($(date +%F_%H-%M-%S))
-    #awk -F '{print "heges" }' >> "$MOLE_RC"
-    #cat $MOLE_RC | awk -F, -v COMMAND=$COMMAND -v GROUP=$GROUP '(($2 == COMMAND)&&(($3 != GROUP)||($3 != ""))) {$3=$3 "_" GROUP; print}' $MOLE_RC >> $MOLE_RC
-
-    ##argumets in order:
-    #   DIRECTORY       $1
-    #   FILE            $2
-    #   GROUP           $3
-    #   DATE            $4
-    #awk -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE '{ print DIRECTORY","COMMAND";"GROUP","DATE }' > $MOLE_RC
+    
+    ##Make record about opening file
+    ##If was FILE opened before, it just append another DATE and GROUP
     awk -F, -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v RECORD="" 'NR >0{
-    ##test if FILE is already in MORE_RC
-    ##If yes, than it is not new file
+    
+    ##Test if FILE is already in MORE_RC
+    ##If yes, than it is not the first time opening it
     if($2 == COMMAND)
         {found=1}1;
     
-    ##  append another DATE to argument $4
+    ##Append another DATE to argument $4
     if ($2 == COMMAND){
         system("sed -i \"s/"$4"/"$4"_"DATE"/g\" $MOLE_RC")    
     }
-    ## append another GROUP to argument $3
+    ##Append another GROUP to argument $3
     if (($2 == COMMAND)&&($3!=GROUP)&&($3!="")){
         system("sed -i \"s/"$3"/"$3"_"GROUP"/g\" $MOLE_RC");   
     }
     
-    }
-
-    
+    }   
 
 
     END {
@@ -180,14 +179,8 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
         #   print $2;
 
 
-    }' $MOLE_RC | column -s ','
+    }' $MOLE_RC | column -s ','  
     
-   
-
-    
-    ##If this FILE haven't been opened yet
-    ##  =>make a new record
-    #echo -e "$DIRECTORY,$COMMAND,$GROUP,$DATE" >> $MOLE_RC  
 
 
     ##check which EDITOR user want to use
