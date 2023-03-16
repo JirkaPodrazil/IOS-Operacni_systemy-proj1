@@ -7,8 +7,8 @@ export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
-#   !!!PRIORITA!!!             
-#   !!!PRIORITA!!!  zmenit Filtry na substringi
+#   !!!PRIORITA!!!  fitr DATE substring      
+#                   counter poctu otevreni souboru
 #                   secret_log vubec neni hotovy
 #                   formatovani sloupcu ve funkci list
 #                   
@@ -55,9 +55,11 @@ DATE_A="0000-00-00"         #records after this date. others are ignored
 DATE_B="9999-99-99"         #records before this date. others are ignored
 FILE=""                     #file that user want open
 DIRECTORY=""                #directory where user want open file
-GROUP="-"                    #variable for file GROUP 
+GROUP=""                    #variable for file GROUP 
 COMMAND=""
 RECORD=""                  #varialble for command (list, secret-log)
+MOST=0
+COUNT=0
 
 
 ## store passing argument
@@ -83,8 +85,7 @@ while [ "$#" -gt 0 ]; do
         shift
         ;;
     -m)     #DOTO
-        
-        shift
+        MOST=1
         shift
         ;;
     *)                              
@@ -108,12 +109,9 @@ if [ "$COMMAND" == "list" ]; then
     #   FILE            $2
     #   GROUP           $3
     #   DATE            $4
+    #   COUNT           $5
     
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B ' ((index($3, GROUP) != 0)&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" GROUP}' $MOLE_RC | column -s ',' -t  
-    
-    
-    
-
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B ' ((index($3, GROUP) != 0)&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" GROUP}' $MOLE_RC | column -s ',' -t   
     
 fi
 
@@ -126,8 +124,17 @@ fi
 
 ##file/directory is not set
 ##pick random file in current directory, and save if into var COMMAND
-if [ "$COMMAND" == "" ]; then         
-    COMMAND=($(ls | shuf))
+if [ "$COMMAND" == "" ]; then
+    ## -m is given
+    if [ $MOST == 1 ]; then
+        ##Change value of COMMAND to FILE with most entries
+        COMMAND=$(awk 'BEGIN{FS=","} {if ($5>MAX) {MAX=$5;LINE=$0;COMMAND=$2}} END{print COMMAND }' $MOLE_RC)
+        echo $COMMAND
+    else
+        COMMAND=($(ls | shuf))
+        
+    fi        
+    
 fi
 
 
@@ -137,6 +144,7 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     
     ##Passed argument is DIRECTORY
     ##Pick random FILE, and save to COMMAND (it will be opened later)
+    ##If -m is set than open FILE with most entries
     if [ -d $COMMAND ]; then
         COMMAND=($(ls $COMMAND| shuf))
     fi
@@ -147,37 +155,33 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     
     ##Make record about opening file
     ##If was FILE opened before, it just append another DATE and GROUP
-    awk -F, -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v RECORD="" 'NR >0{
+    awk -F, -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v COUNT=$COUNT 'NR >0{
     
     ##Test if FILE is already in MORE_RC
     ##If yes, than it is not the first time opening it
     if($2 == COMMAND)
         {found=1}1;
     
-    ##Append another DATE to argument $4
+    ##Append another DATE to argument $4 and increase $5
     if ($2 == COMMAND){
-        system("sed -i \"s/"$4"/"$4"_"DATE"/g\" $MOLE_RC")    
+        #system("sed -i \"s/"$5"/"$5+1"/\" $MOLE_RC");
+        system("sed -i \"s/"$4"/"$4"|"DATE"/g\" $MOLE_RC");
     }
+
     ##Append another GROUP to argument $3
     if (($2 == COMMAND)&&($3!=GROUP)&&($3!="")){
-        system("sed -i \"s/"$3"/"$3"_"GROUP"/g\" $MOLE_RC");   
+       system("sed -i \"s/"$3"/"$3"_"GROUP"/g\" $MOLE_RC");   
     }
     
     }   
 
 
     END {
-        ##If this FILE havent been opened yet
+        ##If this FILE havent been opened yet -
         ##  =>make a new record
+        COUNT=$COUNT + 1
         if (!found)
-            print DIRECTORY","COMMAND","GROUP","DATE >> MOLE_RC;
-
-
-        ##IF FILE have been epened before
-        ## =>Edit GROUP and DATE
-        #if ((found)&&(($3 != GROUP)||($3 != "")))
-        #   print $2;
-
+            print DIRECTORY","COMMAND","GROUP","DATE","COUNT >> MOLE_RC;
 
     }' $MOLE_RC | column -s ','  
     
