@@ -8,11 +8,8 @@ export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
 #           
-#                       zmenit separator z "," na ";"
-# !!!!!!PRIORITA!!!!!!  zaznamy se nebudou opakovat, ale bude se pripisovat groupa a datum 
 #                       zmenit Filtry na substringi
-#                       format DATE zmenit na DATE_TIME     ##zmenono a filtru ASI funguje
-#                           => fitlr na substring          
+        
 #                       secret_log vubec neni hotovy
 #                       formatovani sloupcu ve funkci list
 
@@ -52,7 +49,7 @@ print_help()
 
 
 FILTER=""               
-DATE=""                    #format YYYY-MM-DD
+DATE=""                     #format YYYY-MM-DD
 LOG_FILES=$MOLE_RC          #
 EDIT=$EDITOR                #default EDITOR is vim. User can change it by this variable
 DATE_A="0000-00-00"         #records after this date. others are ignored
@@ -60,7 +57,8 @@ DATE_B="9999-99-99"         #records before this date. others are ignored
 FILE=""                     #file that user want open
 DIRECTORY=""                #directory where user want open file
 GROUP=""                    #variable for file GROUP 
-COMMAND=""                  #varialble for command (list, secret-log)
+COMMAND=""
+RECORD=""                  #varialble for command (list, secret-log)
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -105,11 +103,11 @@ done
 ##display list of records with filters
 if [ "$COMMAND" == "list" ]; then       
     ##argumets in order:
-    #   DIRECTORY
-    #   FILE
-    #   GROUP
-    #   DATE
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $3|| GROUP == "")&&($4>DATE_A)&&($4<DATE_B)) {print $2"\t"$3}' $MOLE_RC | column -s ',' -t  
+    #   DIRECTORY       $1
+    #   FILE            $2
+    #   GROUP           $3
+    #   DATE            $4
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '((GROUP == $3|| GROUP == "")&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" $3}' $MOLE_RC | column -s ',' -t  
     
 fi
 
@@ -140,8 +138,56 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     ##make record about opening file
     DIRECTORY=($(pwd))
     DATE=($(date +%F_%H-%M-%S))
-    awk -F, -v COMMAND=COMMAND ''
-    echo -e "$DIRECTORY,.$COMMAND:,$GROUP,$DATE" >> $MOLE_RC  
+    #awk -F '{print "heges" }' >> "$MOLE_RC"
+    #cat $MOLE_RC | awk -F, -v COMMAND=$COMMAND -v GROUP=$GROUP '(($2 == COMMAND)&&(($3 != GROUP)||($3 != ""))) {$3=$3 "_" GROUP; print}' $MOLE_RC >> $MOLE_RC
+
+    ##argumets in order:
+    #   DIRECTORY       $1
+    #   FILE            $2
+    #   GROUP           $3
+    #   DATE            $4
+    #awk -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE '{ print DIRECTORY","COMMAND";"GROUP","DATE }' > $MOLE_RC
+    awk -F, -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v RECORD="" 'NR >0{
+    ##test if FILE is already in MORE_RC
+    ##If yes, than it is not new file
+    if($2 == COMMAND)
+        {found=1}1;
+    
+    ##  append another DATE to argument $4
+    if ($2 == COMMAND){
+        system("sed -i \"s/"$4"/"$4"_"DATE"/g\" $MOLE_RC")    
+    }
+    ## append another GROUP to argument $3
+    if (($2 == COMMAND)&&($3!=GROUP)&&($3!="")){
+        system("sed -i \"s/"$3"/"$3"_"GROUP"/g\" $MOLE_RC");   
+    }
+    
+    }
+
+    
+
+
+    END {
+        ##If this FILE havent been opened yet
+        ##  =>make a new record
+        if (!found)
+            print DIRECTORY","COMMAND","GROUP","DATE >> MOLE_RC;
+
+
+        ##IF FILE have been epened before
+        ## =>Edit GROUP and DATE
+        #if ((found)&&(($3 != GROUP)||($3 != "")))
+        #   print $2;
+
+
+    }' $MOLE_RC | column -s ','
+    
+   
+
+    
+    ##If this FILE haven't been opened yet
+    ##  =>make a new record
+    #echo -e "$DIRECTORY,$COMMAND,$GROUP,$DATE" >> $MOLE_RC  
 
 
     ##check which EDITOR user want to use
