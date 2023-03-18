@@ -111,7 +111,42 @@ if [ "$COMMAND" == "list" ]; then
     #   DATE            $4
     #   COUNT           $5
     
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B ' ((index($3, GROUP) != 0)&&($4>DATE_A)&&($4<DATE_B)) {print "." $2 ":\t" GROUP}' $MOLE_RC | column -s ',' -t   
+    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '{
+
+        date = 0;       #variable that hold if filter DATEis passed
+        found = 0;      #variable that hold if filter GROUP is passed
+
+        ##Split argument $4 to array and drop the time part
+        split($4,a,"_")
+            ##a[1] is the first date
+            split(a[length(a)-1],b,"|");
+            ##b[2] is the last date
+
+            if ((b[2]>=DATE_A)&&(a[1]<=DATE_B))
+                date=1
+
+
+        ##If -g is not set. Just print every record that passed the DATE filter
+        if ((GROUP == "")&&(date == 1)){
+            print "." $2 ":\t" $3;
+        }       
+        
+
+        ##Split $3 to array where elements are groups
+        split($3, groups, /_/);
+        found = 0;
+        for (i = 1; i <= length(groups); i++){
+            if ((GROUP == groups[i])&&(GROUP != ""))
+                found = 1
+        }
+        if ((found == 1)&&(date))            
+            print "." $2 ":\t" $3;
+        
+    }' $MOLE_RC | column -s ',' -t
+
+    
+         
+
     
 fi
 
@@ -181,7 +216,7 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
         ##  =>make a new record
         COUNT=$COUNT + 1
         if (!found)
-            print DIRECTORY","COMMAND","GROUP","DATE","COUNT >> MOLE_RC;
+            print DIRECTORY","COMMAND","GROUP","DATE >> MOLE_RC;
 
     }' $MOLE_RC | column -s ','  
     
