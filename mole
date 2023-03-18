@@ -8,11 +8,15 @@ export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
 
-#   !!!PRIORITA!!!  filtr DATE substring      
-#                   counter poctu otevreni souboru
+#   !!!PRIORITA!!!  filtr DATE substring
+#                   -m prepinac      
+#
 #                   secret_log vubec neni hotovy
 #                   formatovani sloupcu ve funkci list
-#                   
+#                   kontrola existence otviraneho souboru
+#                   chybove hlasky a navratove hodnoty
+#
+
 print_help()
 {
     echo -e "Usage: \tmole -h"
