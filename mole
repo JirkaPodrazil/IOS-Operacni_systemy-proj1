@@ -7,7 +7,8 @@ export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
-#   !!!PRIORITA!!!  fitr DATE substring      
+
+#   !!!PRIORITA!!!  filtr DATE substring      
 #                   counter poctu otevreni souboru
 #                   secret_log vubec neni hotovy
 #                   formatovani sloupcu ve funkci list
@@ -111,7 +112,7 @@ if [ "$COMMAND" == "list" ]; then
     #   DATE            $4
     #   COUNT           $5
     
-    awk -F, -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '{
+    awk -F ';' -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '{
 
         date = 0;       #variable that hold if FILTER date is passed
         found = 0;      #variable that hold if filter G
@@ -123,7 +124,8 @@ if [ "$COMMAND" == "list" ]; then
             print "." $2 ":\t" $3;
         }       
         
-        split($3, groups, /_/);
+        
+        split($3, groups, /,/);
         found = 0;
         for (i = 1; i <= length(groups); i++){
             if ((GROUP == groups[i])&&(GROUP != ""))
@@ -132,7 +134,7 @@ if [ "$COMMAND" == "list" ]; then
         if ((found == 1))            
             print "." $2 ":\t" $3;
         
-    }' $MOLE_RC | column -s ',' -t
+    }' $MOLE_RC | column -s ';' -t
 
     
          
@@ -153,7 +155,7 @@ if [ "$COMMAND" == "" ]; then
     ## -m is given
     if [ $MOST == 1 ]; then
         ##Change value of COMMAND to FILE with most entries
-        COMMAND=$(awk 'BEGIN{FS=","} {if ($5>MAX) {MAX=$5;LINE=$0;COMMAND=$2}} END{print COMMAND }' $MOLE_RC)
+        COMMAND=$(awk 'BEGIN{FS=";"} {if ($5>MAX) {MAX=$5;LINE=$0;COMMAND=$2}} END{print COMMAND }' $MOLE_RC)
         echo $COMMAND
     else
         COMMAND=($(ls | shuf))
@@ -180,22 +182,33 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     
     ##Make record about opening file
     ##If was FILE opened before, it just append another DATE and GROUP
-    awk -F, -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v COUNT=$COUNT 'NR >0{
+    awk -F ';' -v MOLE_RC=$MOLE_RC -v DIRECTORY=$DIRECTORY -v COMMAND=$COMMAND -v GROUP=$GROUP -v DATE=$DATE -v COUNT=$COUNT 'NR >0{
     
     ##Test if FILE is already in MORE_RC
-    ##If yes, than it is not the first time opening it
+    ##If yes, than it is not the first time opening it  FS
     if($2 == COMMAND)
         {found=1}1;
     
     ##Append another DATE to argument $4 and increase $5
     if ($2 == COMMAND){
         #system("sed -i \"s/"$5"/"$5+1"/\" $MOLE_RC");
-        system("sed -i \"s/"$4"/"$4"|"DATE"/g\" $MOLE_RC");
+        system("sed -i \"s/"$4"/"$4","DATE"/g\" $MOLE_RC");
     }
 
     ##Append another GROUP to argument $3
-    if (($2 == COMMAND)&&($3!=GROUP)&&($3!="")){
-       system("sed -i \"s/"$3"/"$3"_"GROUP"/g\" $MOLE_RC");   
+    if (($2 == COMMAND)){
+
+        ##chech if passed group in new
+        ##if its new, append to GROUP string
+        newGroup = 1    
+        split($3, groups, /,/);
+        for (i = 1; i <= length(groups); i++){
+            if ((GROUP == groups[i])&&(GROUP != ""))
+                newGroup = 0    ##Group is already in $3
+        }
+
+        if (newGroup)
+            system("sed -i \"s/"$3"/"$3","GROUP"/g\" $MOLE_RC");   
     }
     
     }   
@@ -206,9 +219,9 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
         ##  =>make a new record
         COUNT=$COUNT + 1
         if (!found)
-            print DIRECTORY","COMMAND","GROUP","DATE >> MOLE_RC;
+            print DIRECTORY";"COMMAND";"GROUP";"DATE >> MOLE_RC;
 
-    }' $MOLE_RC | column -s ','  
+    }' $MOLE_RC | column -s ';'  
     
 
 
