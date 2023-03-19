@@ -6,12 +6,12 @@ POSIXLY_CORRECT=yes
 export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
-#######TODO
+#######TODO#######
 
 
 #                   -m prepinac      
-#
-#                   secret_log vubec neni hotovy
+#                   chybove stavy a kontrola existence souboru/slozek
+#                   
 #                   formatovani sloupcu ve funkci list
 #
 
@@ -150,10 +150,37 @@ if [ "$COMMAND" == "list" ]; then
         
 fi
 
-##secret_log   DOTODOTODOTODOTODOTODOTO!!!!!!!!!!!!!!!!!!
+##secret_log
+##Create DIRECTORY and FILE and fill with records, the pass filters
 if [ "$COMMAND" == "secret-log" ]; then         
-    #secret-log DOTO
-    echo "jeste neni hotovo"
+    
+    SL_DIR=/home/$USER/.mole                        ##Directory for secret-log
+    DATETIME=$(date +%F_%H-%M-%S)                   ##DATE for file name
+    SL_FILE=log_$USER"_"$DATETIME.bz2               ##Name of the secret-log FILE
+
+    ##Check if secret-log folder already exist
+    if [ ! -d "$SL_DIR" ]; then
+        mkdir $SL_DIR                               ##Make folder ".mole" in directory /home/USER/
+    fi
+    
+    ##Create file for secret-log
+    touch "${SL_DIR}/${SL_FILE}"                    
+
+    ##Check if record pass filter, and print his to secret-log file
+    awk -F ';' -v sl_dir=$SL_DIR -v sl_file=$SL_FILE -v DATE_A=$DATE_A -v DATE_B=$DATE_B '{        
+        split($4, dates, /,/);                      ##split dates of file to array dates
+        
+        split(dates[1], dt_a, "_");                 #date part of first date dt_a[1]    (1 is for the date part, 2 is for time part)
+        split(dates[length(dates)], dt_b, "_");     #date part of last date_b[1] 
+        sl = sl_dir"/"sl_file;
+        ##First and last date have to in range (DATE_A;DATE_B)                        
+        if ((DATE_A < dt_b[1])&&(DATE_B > dt_a[1])){
+            dt=gsub(",",";",$4);                    ##Change format of $4 for printing            
+            print $1";"$4 >> sl
+        }
+    
+    }' $MOLE_RC    
+    
 fi
 
 
@@ -206,12 +233,11 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     
     ##Append another DATE to argument $4 and increase $5
     if ($2 == COMMAND){
-        #system("sed -i \"s/"$5"/"$5+1"/\" $MOLE_RC");
         system("sed -i \"s/"$4"/"$4","DATE"/g\" $MOLE_RC");
     }
 
     ##Append another GROUP to argument $3
-    if (($2 == COMMAND)){
+    if (($2 == COMMAND)&&(GROUP != "")){
 
         ##chech if passed group in new
         ##if its new, append to GROUP string
