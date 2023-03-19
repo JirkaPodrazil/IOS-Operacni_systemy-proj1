@@ -114,20 +114,15 @@ if [ "$COMMAND" == "list" ]; then
     #   DATE            $4
     
     awk -F ';' -v GROUP=$GROUP -v DATE_A=$DATE_A -v DATE_B=$DATE_B '{
-
         date = 0;       #variable that hold if FILTER date is passed
         found = 0;      #variable that hold if filter GROUP is passed
-
         split($4, dates, /,/);                      ##split dates of file to array dates
         
         split(dates[1], dt_a, "_");                 #date part of first date dt_a[1]    (1 is for the date part, 2 is for time part)
         split(dates[length(dates)], dt_b, "_");     #date part of last date_b[1] 
-
         ##First and last date have to in range (DATE_A;DATE_B)                        
         if ((DATE_A < dt_b[1])&&(DATE_B > dt_a[1]))
             date = 1;
-
-
         ##If -g is not set. Just print every record
         if ((GROUP == "")&&(date)){
             if ($3 == "")
@@ -235,10 +230,8 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     if ($2 == COMMAND){
         system("sed -i \"s/"$4"/"$4","DATE"/g\" $MOLE_RC");
     }
-
     ##Append another GROUP to argument $3
     if (($2 == COMMAND)&&(GROUP != "")){
-
         ##chech if passed group in new
         ##if its new, append to GROUP string
         newGroup = 1    
@@ -247,20 +240,17 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
             if ((GROUP == groups[i])&&(GROUP != ""))
                 newGroup = 0    ##Group is already in $3
         }
-
         if (newGroup)
             system("sed -i \"s/"$3"/"$3","GROUP"/g\" $MOLE_RC");   
     }    
     } 
-
     END {
         ##If this FILE havent been opened yet -
         ##  =>make a new record
         COUNT=$COUNT + 1
         if (!found)
             print DIRECTORY";"COMMAND";"GROUP";"DATE >> MOLE_RC;
-
-    }' $MOLE_RC | column -s ';'      
+    }' $MOLE_RC | column -s ';' -t    
 
 
     ##check which EDITOR user want to use
