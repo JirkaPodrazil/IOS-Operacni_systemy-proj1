@@ -8,7 +8,7 @@ export LC_NUMERIC=en_US.UTF-8
 
 #######TODO
 
-#   !!!PRIORITA!!!  filtr DATE substring
+
 #                   -m prepinac      
 #
 #                   secret_log vubec neni hotovy
@@ -118,8 +118,18 @@ if [ "$COMMAND" == "list" ]; then
         date = 0;       #variable that hold if FILTER date is passed
         found = 0;      #variable that hold if filter GROUP is passed
 
+        split($4, dates, /,/);                      ##split dates of file to array dates
+        
+        split(dates[1], dt_a, "_");                 #date part of first date dt_a[1]    (1 is for the date part, 2 is for time part)
+        split(dates[length(dates)], dt_b, "_");     #date part of last date_b[1] 
+
+        ##First and last date have to in range (DATE_A;DATE_B)                        
+        if ((DATE_A < dt_b[1])&&(DATE_B > dt_a[1]))
+            date = 1;
+
+
         ##If -g is not set. Just print every record
-        if ((GROUP == "")){
+        if ((GROUP == "")&&(date)){
             if ($3 == "")
                 $3 = "-";
             print "." $2 ":\t" $3;          #Printing list
@@ -179,11 +189,6 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
     ##If -m is set than open FILE with most entries
     if [ -d $COMMAND ]; then
         COMMAND=($(ls $COMMAND| shuf))
-    fi
-
-    if [ ! -w "$FILE" ]; then
-        echo "Given FILE can not be open"
-        exit 2
     fi
 
     
