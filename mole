@@ -9,7 +9,7 @@ export LC_NUMERIC=en_US.UTF-8
 #######TODO#######
 
 
-#                   -m prepinac      
+#                   -m prepinac nefunguje jak ma      
 #                   chybove stavy a kontrola existence souboru/slozek
 #                   
 #                   formatovani sloupcu ve funkci list
@@ -60,7 +60,6 @@ GROUP=""                    #variable for file GROUP
 COMMAND=""
 RECORD=""                  #varialble for command (list, secret-log)
 MOST=0
-COUNT=0
 
 
 ## store passing argument
@@ -198,8 +197,34 @@ if [ "$COMMAND" == "" ]; then
     ## -m is given
     if [ $MOST == 1 ]; then
         ##Change value of COMMAND to FILE with most entries
+        (awk -F, '
+        BEGIN{
+            most_opened="";     ##FILE with the most entries currently
+            max_entries=0;      ##Currently the most entries
+            FS=";"
+        }
         
-        echo $COMMAND
+        {
+            date_arr = gsub(",", "", $4);
+            if (length(date_arr) > most_entries){
+                most_open = $2;
+                most_entries = length(date_arr);
+            }
+        }
+        END{
+            if(most_opened > 0){
+                print most_opened;
+            }
+            else{
+                print "";
+            }
+        }
+        ' $MOLE_RC)
+        if [ "$COMMAND" == "" ]; then
+            echo -e "\t\tError: No opened file was found" >&2;
+            exit 1;
+        fi
+        echo $COMMAND;
     else
         ##Open random file in this DIRECTORY
         COMMAND=($(ls -p | grep -v / | shuf -n 1))
@@ -270,7 +295,7 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
                 newGroup = 0    ##Group is already in $3;
             }                
         }
-        ##Nwch GROUP
+        ##New GROUP
         if (newGroup){
             system("sed -i \"s/"$3"/"$3","GROUP"/g\" $MOLE_RC");
         }
