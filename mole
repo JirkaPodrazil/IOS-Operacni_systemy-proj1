@@ -45,8 +45,6 @@ print_help()
         LOG_FILES=""    
     fi
 
-
-    echo $LOG_FILES
 }
 
 
@@ -73,16 +71,31 @@ while [ "$#" -gt 0 ]; do
         exit 0
         ;;
     -a)
+        ##Checking if argument is realy given
+        if [ -z "$2" ]; then
+            echo -e "\t\tError: This option requeres an argument" >&2;
+            exit 1;
+        fi
         DATE_A="$2"
         shift
         shift
         ;;
     -b)
+        ##Checking if argument is realy given
+        if [ -z "$2" ]; then
+            echo -e "\t\tError: This option requeres an argument" >&2;
+            exit 1;
+        fi
         DATE_B="$2"
         shift
         shift
         ;;
     -g)
+        ##Checking if argument is realy given
+        if [ -z "$2" ]; then
+            echo -e "\t\tError: This option requeres an argument" >&2;
+            exit 1;
+        fi
         GROUP="$2"
         shift
         shift
@@ -206,6 +219,22 @@ fi
 ##passed argument is not "list" or "sec-log" and it is not empty, so it has to by file, or file dicertory
 if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" != "" ]; then
     
+    ##Check if MOLE_RC is set
+    if [ "$LOG_FILES" == "" ]; then       
+        echo -e "\t\tError: MOLE_RC was not set yet\n\t\tSee ./mole -h for help" >&2;
+        exit 1;
+    fi
+
+    ##Check if set on existing file
+    ##If not, create directory in file in MOLE_RC
+    if [ ! -e "$LOG_FILE" ]; then
+        if [ ! -d "$(dirname "$FILE")" ]; then
+            mkdir -p "$(dirname "$FILE")" # Create directory (with parent directories)
+        fi
+        touch "$LOG_FILES" # Create file if argument MOLE_RC
+    fi
+
+
     ##Passed argument is DIRECTORY
     ##Pick random FILE, and save to COMMAND (it will be opened later)
     ##If -m is set than open FILE with most entries
@@ -231,17 +260,21 @@ if [ "$COMMAND" != "list" ] && [ "$COMMAND" != "secret-log" ] && [ "$COMMAND" !=
         system("sed -i \"s/"$4"/"$4","DATE"/g\" $MOLE_RC");
     }
     ##Append another GROUP to argument $3
-    if (($2 == COMMAND)&&(GROUP != "")){
+    if (($2 == COMMAND)){
         ##chech if passed group in new
         ##if its new, append to GROUP string
         newGroup = 1    
         split($3, groups, /,/);
         for (i = 1; i <= length(groups); i++){
-            if ((GROUP == groups[i])&&(GROUP != ""))
-                newGroup = 0    ##Group is already in $3
+            if ((GROUP == groups[i])&&(GROUP != "")){
+                newGroup = 0    ##Group is already in $3;
+            }                
         }
-        if (newGroup)
-            system("sed -i \"s/"$3"/"$3","GROUP"/g\" $MOLE_RC");   
+        ##Nwch GROUP
+        if (newGroup){
+            system("sed -i \"s/"$3"/"$3","GROUP"/g\" $MOLE_RC");
+        }
+               
     }    
     } 
     END {
