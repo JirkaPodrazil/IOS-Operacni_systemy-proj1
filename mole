@@ -6,14 +6,6 @@ POSIXLY_CORRECT=yes
 export POSIXLY_CORRECT=yes
 export LC_NUMERIC=en_US.UTF-8
 
-#######TODO#######
-
-
-#                   -m prepinac nefunguje jak ma      
-#                   chybove stavy a kontrola existence souboru/slozek
-#                   
-#                   formatovani sloupcu ve funkci list
-#
 
 print_help()
 {
